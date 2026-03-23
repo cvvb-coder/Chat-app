@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#4a90e2">
+    <meta name="description" content="تطبيق مراسلات فوري مع غرف عامة ومحادثات خاصة مشفرة">
+    <title>تطبيق المراسلات - تواصل فوري</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- شاشة تسجيل الدخول -->
+    <div id="loginScreen" class="screen active">
+        <div class="login-container">
+            <div class="logo">💬</div>
+            <h1>تطبيق المراسلات</h1>
+            <p>تواصل مع أصدقائك بخصوصية تامة</p>
+            <input type="text" id="username" placeholder="اسم المستخدم" maxlength="20" autocomplete="off">
+            <button onclick="login()" id="loginBtn">دخول</button>
+            <div class="info">✨ محادثات خاصة مشفرة | غرف عامة فورية | جميع الرسائل محفوظة</div>
+        </div>
+    </div>
+
+    <!-- شاشة المحادثة الرئيسية -->
+    <div id="chatScreen" class="screen">
+        <div class="chat-container">
+            <!-- الهيدر -->
+            <div class="chat-header">
+                <div class="user-info">
+                    <span id="currentUser"></span>
+                    <span class="online-dot"></span>
+                </div>
+                <div class="header-actions">
+                    <button onclick="logout()" class="logout-btn">🚪 خروج</button>
+                </div>
+            </div>
+
+            <!-- تبويبات -->
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('public')">🌐 العامة</button>
+                <button class="tab-btn" onclick="switchTab('private')">🔒 الخاصة</button>
+                <button class="tab-btn" onclick="switchTab('online')">🟢 المتصلون</button>
+            </div>
+
+            <!-- المحتوى حسب التبويب -->
+            <div id="publicTab" class="tab-content active">
+                <div class="messages-container" id="publicMessages">
+                    <div class="welcome-msg">✨ جاري تحميل الرسائل...</div>
+                </div>
+                <div class="input-area">
+                    <input type="text" id="publicInput" placeholder="اكتب رسالة للجميع..." onkeypress="handlePublicKeyPress(event)">
+                    <button onclick="sendPublicMessage()">إرسال</button>
+                </div>
+            </div>
+
+            <div id="privateTab" class="tab-content">
+                <div class="private-chat-header">
+                    <select id="onlineUsersSelect">
+                        <option value="">-- اختر المستخدم للمحادثة الخاصة --</option>
+                    </select>
+                    <div id="privateChatStatus" class="chat-status"></div>
+                </div>
+                <div class="messages-container" id="privateMessages">
+                    <div class="info-msg">🔒 اختر مستخدماً لبدء محادثة خاصة مشفرة</div>
+                </div>
+                <div class="input-area">
+                    <input type="text" id="privateInput" placeholder="رسالة خاصة..." onkeypress="handlePrivateKeyPress(event)" disabled>
+                    <button onclick="sendPrivateMessage()" id="privateSendBtn" disabled>إرسال</button>
+                </div>
+            </div>
+
+            <div id="onlineTab" class="tab-content">
+                <div class="online-users-list" id="onlineUsersList">
+                    <div class="loading-msg">جاري تحميل المستخدمين...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- إشعارات -->
+    <div id="notification" class="notification"></div>
+
+    <!-- Supabase JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+</body>
+</html>
