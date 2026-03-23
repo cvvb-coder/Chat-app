@@ -6,7 +6,53 @@
 console.log('1. Supabase client:', supabase ? '✅ موجود' : '❌ غير موجود');
 console.log('2. Supabase URL:', https://qrgihwclvpuefnrswsnp.supabase.co);
 console.log('3. Supabase Key:', sb_publishable_0QoBfzE-JgvKqurfSzF8uA_he3HIcW7 ? '✅ موجود' : '❌ غير موجود');
+// عرض الأخطاء مباشرة على الشاشة (لرؤيتها على الجوال)
+function showErrorOnScreen(message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.style.cssText = `
+        position: fixed;
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+        background: red;
+        color: white;
+        padding: 10px;
+        border-radius: 10px;
+        z-index: 9999;
+        font-size: 12px;
+        word-break: break-word;
+    `;
+    errorDiv.innerHTML = '❌ ' + message;
+    document.body.appendChild(errorDiv);
+    setTimeout(() => errorDiv.remove(), 10000);
+}
 
+// اختبار بسيط عند تحميل الصفحة
+window.addEventListener('load', function() {
+    setTimeout(async function() {
+        try {
+            const { data, error } = await supabase.from('users').select('count');
+            if (error) {
+                showErrorOnScreen('خطأ: ' + error.message);
+            } else {
+                showErrorOnScreen('✅ الاتصال بقاعدة البيانات ناجح!');
+            }
+        } catch(e) {
+            showErrorOnScreen('فشل الاتصال: ' + e.message);
+        }
+    }, 2000);
+});
+
+// تعديل دالة login لإظهار الأخطاء
+const originalLogin = login;
+window.login = async function() {
+    try {
+        showErrorOnScreen('جاري تسجيل الدخول...');
+        await originalLogin();
+    } catch(e) {
+        showErrorOnScreen('خطأ: ' + e.message);
+    }
+};
 // 2. اختبار تسجيل الدخول يدوياً
 window.testLogin = async function(username) {
     console.log('🔍 اختبار تسجيل الدخول لاسم:', username);
