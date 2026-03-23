@@ -4,28 +4,44 @@
 // ============================================
 
 // ============================================
-// Supabase Configuration - باستخدام متغيرات البيئة
+// Supabase Configuration - مباشر
 // ============================================
 
-// المتغيرات ستأتي من Vercel (Environment Variables)
-// إذا كنت تعمل محلياً، استخدم القيم الافتراضية للتجربة
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://qrgihwclvpuefnrswsnp.supabase.co';
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'sb_publishable_0QoBfzE-JgvKqurfSzF8uA_he3HIcW7';
-
-// تنبيه للتطوير المحلي
-if (!process.env.SUPABASE_URL && SUPABASE_URL === 'https://your-project.supabase.co') {
-    console.warn('⚠️ تنبيه: يرجى إضافة SUPABASE_URL و SUPABASE_ANON_KEY في متغيرات البيئة');
-    console.warn('⚠️ للتجربة المحلية: يمكنك تجاهل هذا التنبيه');
-}
+// ⚠️ IMPORTANT: ضع بيانات Supabase هنا - انسخها من Project Settings → API
+const SUPABASE_URL = 'https://qrgihwclvpuefnrswsnp.supabase.co';  // 👈 ضع رابط Supabase هنا
+const SUPABASE_ANON_KEY = 'sb_publishable_0QoBfzE-JgvKqurfSzF8uA_he3HIcW7';  // 👈 ضع المفتاح العام هنا
 
 // تهيئة Supabase client
 const supabase = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// التحقق من تحميل Supabase
-if (!supabase) {
-    console.error('Supabase not loaded!');
-    alert('خطأ: لم يتم تحميل Supabase. تأكد من اتصال الإنترنت');
-}
+// ============================================
+// اختبار الاتصال - لمعرفة الخطأ
+// ============================================
+window.addEventListener('load', function() {
+    console.log('✅ التطبيق جاهز');
+    console.log('📡 Supabase URL:', SUPABASE_URL);
+    console.log('🔑 Supabase Key:', SUPABASE_ANON_KEY ? 'موجود ✓' : 'غير موجود ✗');
+    
+    if (!supabase) {
+        console.error('❌ Supabase client لم يتم تحميله');
+        alert('خطأ: لم يتم تحميل Supabase. تأكد من اتصال الإنترنت');
+        return;
+    }
+    
+    // اختبار قراءة المستخدمين
+    supabase.from('users').select('count').then(result => {
+        console.log('✅ اتصال Supabase ناجح!', result);
+        if (result.error) {
+            console.error('❌ خطأ في القراءة:', result.error);
+            alert('خطأ في قاعدة البيانات: ' + result.error.message);
+        } else {
+            console.log('📊 عدد المستخدمين:', result.data?.[0]?.count || 0);
+        }
+    }).catch(error => {
+        console.error('❌ فشل الاتصال بـ Supabase:', error);
+        alert('خطأ في الاتصال بـ Supabase: ' + error.message);
+    });
+});
 
 // ---------- المتغيرات العامة ----------
 let currentUser = null;
@@ -64,6 +80,7 @@ async function login() {
     
     try {
         showNotification('جاري تسجيل الدخول...');
+        console.log('🔐 محاولة تسجيل الدخول باسم:', username);
         
         // البحث عن المستخدم أو إنشاؤه
         let { data: existingUser, error: findError } = await supabase
@@ -72,7 +89,8 @@ async function login() {
             .eq('username', username)
             .maybeSingle();
         
-        if (findError && findError.code !== 'PGRST116') {
+        if (findError) {
+            console.error('❌ خطأ في البحث عن المستخدم:', findError);
             throw findError;
         }
         
@@ -86,11 +104,15 @@ async function login() {
                 .update({ status: 'online', last_seen: new Date().toISOString() })
                 .eq('id', currentUserId);
             
-            if (updateError) console.error('Update error:', updateError);
+            if (updateError) {
+                console.error('❌ خطأ في تحديث الحالة:', updateError);
+            }
             
+            console.log('✅ مرحباً بعودتك:', currentUser);
             showNotification(`مرحباً بعودتك ${currentUser}!`);
         } else {
             // مستخدم جديد - إنشاء
+            console.log('📝 إنشاء مستخدم جديد:', username);
             const { data: newUser, error: insertError } = await supabase
                 .from('users')
                 .insert({ 
@@ -101,10 +123,14 @@ async function login() {
                 .select()
                 .single();
             
-            if (insertError) throw insertError;
+            if (insertError) {
+                console.error('❌ خطأ في إنشاء المستخدم:', insertError);
+                throw insertError;
+            }
             
             currentUserId = newUser.id;
             currentUser = newUser.username;
+            console.log('✅ تم إنشاء المستخدم:', currentUser);
             showNotification(`✨ مرحباً ${currentUser}! حسابك الجديد جاهز`);
         }
         
@@ -114,9 +140,10 @@ async function login() {
         // بدء الجلسة
         await initApp();
         showScreen('chatScreen');
+        console.log('✅ تم تسجيل الدخول بنجاح');
         
     } catch (error) {
-        console.error('Login error:', error);
+        console.error('❌ خطأ في تسجيل الدخول:', error);
         showNotification('خطأ في تسجيل الدخول: ' + error.message);
     }
 }
@@ -151,6 +178,7 @@ async function logout() {
         currentUserId = null;
         showScreen('loginScreen');
         document.getElementById('username').value = '';
+        console.log('👋 تم تسجيل الخروج');
     }
 }
 
@@ -172,9 +200,10 @@ async function sendPublicMessage() {
         if (error) throw error;
         
         input.value = '';
+        console.log('📨 تم إرسال رسالة عامة');
         
     } catch (error) {
-        console.error('Send error:', error);
+        console.error('❌ خطأ في إرسال الرسالة:', error);
         showNotification('خطأ في إرسال الرسالة');
     }
 }
@@ -188,7 +217,7 @@ async function loadPublicMessages() {
         .limit(50);
     
     if (error) {
-        console.error('Load messages error:', error);
+        console.error('❌ خطأ في تحميل الرسائل:', error);
         return;
     }
     
@@ -203,6 +232,7 @@ async function loadPublicMessages() {
             msg.created_at
         );
     });
+    console.log(`📥 تم تحميل ${messages.length} رسالة`);
 }
 
 // ---------- إضافة رسالة عامة للواجهة ----------
@@ -242,7 +272,7 @@ async function updateOnlineUsersList() {
         .neq('id', currentUserId);
     
     if (error) {
-        console.error('Load users error:', error);
+        console.error('❌ خطأ في تحميل المستخدمين:', error);
         return;
     }
     
@@ -269,6 +299,7 @@ async function updateOnlineUsersList() {
         users.map(user => `<option value="${user.username}" data-id="${user.id}">${escapeHtml(user.username)}</option>`).join('');
     
     onlineUsers = users;
+    console.log(`👥 ${users.length} مستخدم متصل`);
 }
 
 // ---------- الاستماع للرسائل الجديدة (Realtime) ----------
@@ -279,7 +310,6 @@ async function subscribeToPublicMessages() {
             { event: 'INSERT', schema: 'public', table: 'public_messages' },
             (payload) => {
                 const newMsg = payload.new;
-                // لا نضيف الرسالة إذا كانت من المستخدم الحالي (أضفناها بالفعل)
                 if (newMsg.user_id !== currentUserId) {
                     addPublicMessage(newMsg.username, newMsg.content, 'received', newMsg.created_at);
                     showNotification(`📨 رسالة جديدة من ${newMsg.username}`);
@@ -289,6 +319,8 @@ async function subscribeToPublicMessages() {
         .subscribe((status) => {
             if (status === 'SUBSCRIBED') {
                 console.log('✅ جاري الاستماع للرسائل الجديدة');
+            } else {
+                console.log('📡 حالة الاشتراك:', status);
             }
         });
 }
@@ -311,7 +343,6 @@ async function startPrivateChat(userName) {
     const select = document.getElementById('onlineUsersSelect');
     select.value = userName;
     
-    // البحث عن user ID
     const user = onlineUsers.find(u => u.username === userName);
     if (!user) {
         showNotification('المستخدم غير متصل حالياً');
@@ -322,12 +353,11 @@ async function startPrivateChat(userName) {
     document.getElementById('privateInput').disabled = false;
     document.getElementById('privateSendBtn').disabled = false;
     
-    // تنظيف المحادثة السابقة
     const container = document.getElementById('privateMessages');
     container.innerHTML = `
         <div class="info-msg">
             🔒 محادثة مشفرة مع ${escapeHtml(userName)}<br>
-            📡 WebRTC P2P قيد التطوير - حالياً الرسائل محاكاة محلية
+            📡 WebRTC P2P قيد التطوير
         </div>
     `;
     
@@ -347,7 +377,6 @@ function sendPrivateMessage() {
     addPrivateMessage(currentUser, text, 'sent');
     input.value = '';
     
-    // محاكاة الرد (سيتم استبدالها بـ WebRTC لاحقاً)
     setTimeout(() => {
         addPrivateMessage(selectedUser, `(محاكاة) ${text.substring(0, 50)}`, 'received');
         showNotification(`🔒 رسالة خاصة من ${selectedUser}`);
@@ -376,15 +405,12 @@ function handlePrivateKeyPress(event) {
 }
 
 function switchTab(tab) {
-    // تحديث الأزرار
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     event.target.classList.add('active');
     
-    // تحديث المحتوى
     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
     document.getElementById(`${tab}Tab`).classList.add('active');
     
-    // تحديث القوائم حسب التبويب
     if (tab === 'online') {
         updateOnlineUsersList();
     }
@@ -399,22 +425,13 @@ function escapeHtml(text) {
 
 // ---------- تهيئة التطبيق ----------
 async function initApp() {
-    // تحميل الرسائل السابقة
     await loadPublicMessages();
-    
-    // تحديث قائمة المستخدمين
     await updateOnlineUsersList();
-    
-    // الاشتراك في الرسائل الجديدة
     await subscribeToPublicMessages();
-    
-    // الاشتراك في تغيرات المستخدمين
     await subscribeToUsers();
     
-    // تحديث قائمة المستخدمين كل 30 ثانية
     setInterval(updateOnlineUsersList, 30000);
     
-    // تنظيف عند إغلاق الصفحة
     window.addEventListener('beforeunload', () => {
         if (currentUserId) {
             supabase
@@ -424,5 +441,5 @@ async function initApp() {
         }
     });
     
-    showNotification(`✨ مرحباً ${currentUser}! الدردشة العامة تعمل الآن مع الجميع`);
+    showNotification(`✨ مرحباً ${currentUser}! الدردشة العامة تعمل الآن`);
 }
