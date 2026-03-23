@@ -4,13 +4,19 @@
 // ============================================
 
 // ============================================
-// Supabase Configuration
+// Supabase Configuration - باستخدام متغيرات البيئة
 // ============================================
 
-// ⚠️ IMPORTANT: استبدل هذه البيانات ببيانات مشروعك من Supabase
-// اذهب إلى Project Settings → API في Supabase
-const SUPABASE_URL = 'https://your-project.supabase.co';  // غيّر هذا!
-const SUPABASE_ANON_KEY = 'your-anon-key';  // غيّر هذا!
+// المتغيرات ستأتي من Vercel (Environment Variables)
+// إذا كنت تعمل محلياً، استخدم القيم الافتراضية للتجربة
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://your-project.supabase.co';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'your-anon-key';
+
+// تنبيه للتطوير المحلي
+if (!process.env.SUPABASE_URL && SUPABASE_URL === 'https://your-project.supabase.co') {
+    console.warn('⚠️ تنبيه: يرجى إضافة SUPABASE_URL و SUPABASE_ANON_KEY في متغيرات البيئة');
+    console.warn('⚠️ للتجربة المحلية: يمكنك تجاهل هذا التنبيه');
+}
 
 // تهيئة Supabase client
 const supabase = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -50,7 +56,7 @@ async function login() {
         return;
     }
     
-    // منع الأسماء المكررة
+    // منع الأسماء القصيرة
     if (username.length < 3) {
         showNotification('اسم المستخدم يجب أن يكون 3 أحرف على الأقل');
         return;
@@ -282,7 +288,7 @@ async function subscribeToPublicMessages() {
         )
         .subscribe((status) => {
             if (status === 'SUBSCRIBED') {
-                console.log('Subscribed to public messages');
+                console.log('✅ جاري الاستماع للرسائل الجديدة');
             }
         });
 }
@@ -420,7 +426,3 @@ async function initApp() {
     
     showNotification(`✨ مرحباً ${currentUser}! الدردشة العامة تعمل الآن مع الجميع`);
 }
-
-// ============================================
-// تنبيه: لا تنسَ تحديث SUPABASE_URL و SUPABASE_ANON_KEY
-// ============================================
