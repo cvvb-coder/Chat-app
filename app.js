@@ -1,4 +1,56 @@
 // ============================================
+// اختبار شامل للتطبيق
+// ============================================
+
+// 1. اختبار تحميل Supabase
+console.log('1. Supabase client:', supabase ? '✅ موجود' : '❌ غير موجود');
+console.log('2. Supabase URL:', https://qrgihwclvpuefnrswsnp.supabase.co);
+console.log('3. Supabase Key:', sb_publishable_0QoBfzE-JgvKqurfSzF8uA_he3HIcW7 ? '✅ موجود' : '❌ غير موجود');
+
+// 2. اختبار تسجيل الدخول يدوياً
+window.testLogin = async function(username) {
+    console.log('🔍 اختبار تسجيل الدخول لاسم:', username);
+    
+    // البحث عن المستخدم
+    const { data: existingUser, error: findError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('username', username)
+        .maybeSingle();
+    
+    if (findError) {
+        console.error('❌ خطأ في البحث:', findError);
+        return { success: false, error: findError };
+    }
+    
+    if (existingUser) {
+        console.log('✅ المستخدم موجود:', existingUser);
+        return { success: true, user: existingUser, isNew: false };
+    } else {
+        console.log('📝 المستخدم غير موجود، سيتم إنشاؤه');
+        // إنشاء مستخدم جديد
+        const { data: newUser, error: insertError } = await supabase
+            .from('users')
+            .insert({ username: username, status: 'online' })
+            .select()
+            .single();
+        
+        if (insertError) {
+            console.error('❌ خطأ في الإنشاء:', insertError);
+            return { success: false, error: insertError };
+        }
+        
+        console.log('✅ تم إنشاء المستخدم:', newUser);
+        return { success: true, user: newUser, isNew: true };
+    }
+};
+
+// 3. اختبار عرض رسائل الخطأ
+window.addEventListener('error', function(e) {
+    console.error('🔥 خطأ عام في التطبيق:', e.message, e.filename, e.lineno);
+    alert('خطأ: ' + e.message);
+});
+// ============================================
 // تطبيق مراسلات - مع Supabase
 // يدعم الغرف العامة والمحادثات الخاصة
 // ============================================
